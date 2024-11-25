@@ -32,10 +32,72 @@
 ├── pom.xml                         pom.xml文件
 ├── settings.xml                    maven 配置文件
 ├── springboot-cloudbaserun.iml     项目配置文件
-└── src                             源码目录
-    └── main                        源码主目录
-        ├── java                    业务逻辑目录
-        └── resources               资源文件目录
+
+src/main/java/com/haruki/poker/
+├── PokerApplication.java
+│
+├── config/                    # 配置类
+│   ├── SecurityConfig.java
+│   ├── SwaggerConfig.java
+│   └── WebConfig.java
+│
+├── controller/               # 控制器层
+│   ├── UserController.java
+│   └── dto/                 # 数据传输对象
+│       ├── request/         # 请求对象
+│       │   ├── UserCreateRequest.java
+│       │   └── UserUpdateRequest.java
+│       └── response/        # 响应对象
+│           ├── UserResponse.java
+│           └── PageResponse.java
+│
+├── domain/                  # 领域模型
+│   ├── User.java
+│   └── Role.java
+│
+├── repository/             # 仓库层
+│   ├── UserRepository.java
+│   └── entity/            # 数据库实体
+│       ├── UserEntity.java
+│       └── RoleEntity.java
+│
+├── service/               # 服务层
+│   ├── UserService.java
+│   └── impl/             # 服务实现
+│       └── UserServiceImpl.java
+│
+├── mapper/               # 对象映射
+│   └── UserMapper.java
+│
+├── common/              # 公共组件
+│   ├── constant/       # 常量
+│   │   └── CommonConstants.java
+│   ├── enums/         # 枚举
+│   │   └── UserStatus.java
+│   └── util/          # 工具类
+│       └── DateUtils.java
+│
+├── exception/          # 异常处理
+│   ├── BusinessException.java
+│   ├── ErrorCode.java
+│   └── GlobalExceptionHandler.java
+│
+└── security/          # 安全相关
+    ├── JwtTokenProvider.java
+    └── UserPrincipal.java
+
+src/main/resources/
+├── application.yml
+├── application-dev.yml
+└── application-prod.yml
+
+src/test/java/com/example/project/
+├── controller/
+│   └── UserControllerTest.java
+├── service/
+│   └── UserServiceTest.java
+└── repository/
+    └── UserRepositoryTest.java
 ~~~
 
 
