@@ -8,13 +8,13 @@
         <version>2.5.5</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
-    <groupId>com.tencent</groupId>
-    <artifactId>springboot-wxcloudrun</artifactId>
+    <groupId>com.haruki</groupId>
+    <artifactId>poker</artifactId>
     <version>1.0</version>
-    <name>springboot-wxcloudrun</name>
-    <description>Demo project for Spring Boot</description>
+    <name>poker</name>
+    <description>poker count</description>
     <properties>
-        <java.version>1.8</java.version>
+        <java.version>17</java.version>
     </properties>
     <dependencies>
         <dependency>
@@ -64,6 +64,15 @@
                             <artifactId>lombok</artifactId>
                         </exclude>
                     </excludes>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
                 </configuration>
             </plugin>
         </plugins>
