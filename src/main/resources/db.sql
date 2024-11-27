@@ -24,7 +24,7 @@ CREATE TABLE `user_room` (
     `relation_id` INT NOT NULL AUTO_INCREMENT COMMENT '关系ID',
     `room_id` VARCHAR(32) NOT NULL COMMENT '房间ID',
     `openid` VARCHAR(32) NOT NULL COMMENT '用户OpenID',
-    `buy_in_count` INT NOT NULL DEFAULT 0 COMMENT '带入次数',
+    `buy_in` INT NOT NULL DEFAULT 0 COMMENT '带入码量',
     `final_amount` INT NOT NULL DEFAULT 0 COMMENT '结算码量',
     `profit_loss` INT NOT NULL DEFAULT 0 COMMENT '盈亏情况',
     `settlement_status` VARCHAR(1) NOT NULL DEFAULT 'U' COMMENT '结算状态 U-未结算 S-已结算',

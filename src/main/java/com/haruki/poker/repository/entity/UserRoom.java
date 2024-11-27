@@ -10,7 +10,7 @@ public class UserRoom {
     private String roomId;
     private String openid;
     private String userNickname;
-    private int buyInCount;
+    private int buyIn;
     private int finalAmount;
     private int profitLoss;
     private String settlementStatus;

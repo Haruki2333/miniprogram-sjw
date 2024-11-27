@@ -18,6 +18,7 @@ dist/
 *.class
 *.o
 *.pyc
+**/target
 
 # 日志文件
 *.log

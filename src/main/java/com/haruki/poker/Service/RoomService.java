@@ -3,7 +3,6 @@ package com.haruki.poker.Service;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,14 +12,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.haruki.poker.controller.dto.RoomInfoDTO;
-import com.haruki.poker.controller.dto.RoomTransactionDTO;
 import com.haruki.poker.controller.dto.TransactionRecordDTO;
 import com.haruki.poker.controller.dto.UserDetailDTO;
 import com.haruki.poker.repository.RoomRepository;
+import com.haruki.poker.repository.RoomTransactionRepository;
 import com.haruki.poker.repository.UserRoomRepository;
 import com.haruki.poker.repository.entity.Room;
 import com.haruki.poker.repository.entity.User;
 import com.haruki.poker.repository.entity.UserRoom;
+import com.haruki.poker.repository.entity.RoomTransaction;
 
 @Service
 public class RoomService {
@@ -30,6 +30,9 @@ public class RoomService {
     
     @Autowired
     private UserRoomRepository userRoomRepository;
+
+    @Autowired
+    private RoomTransactionRepository roomTransactionRepository;
 
     @Autowired
     private UserService userService;
@@ -44,15 +47,26 @@ public class RoomService {
         if (rooms == null || rooms.isEmpty()) {
             return List.of();
         }
+
+        LocalDateTime now = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
         
-        return rooms.stream().map(room -> {
-            RoomInfoDTO dto = new RoomInfoDTO();
-            dto.setRoomId(room.getRoomId());
-            dto.setRoomName(room.getRoomName());
-            dto.setRoomCode(room.getRoomCode());
-            dto.setChipAmount(room.getChipAmount());
-            return dto;
-        }).collect(Collectors.toList());
+        return rooms.stream()
+            .filter(room -> {
+                LocalDateTime roomTime = LocalDateTime.parse(room.getCreatedTime(), formatter);
+                Duration duration = Duration.between(roomTime, now);
+                return duration.toHours() < 48;
+            })
+            .sorted((r1, r2) -> r2.getCreatedTime().compareTo(r1.getCreatedTime()))
+            .map(room -> {
+                RoomInfoDTO dto = new RoomInfoDTO();
+                dto.setRoomId(room.getRoomId());
+                dto.setRoomName(room.getRoomName());
+                dto.setRoomCode(room.getRoomCode());
+                dto.setChipAmount(room.getChipAmount());
+                return dto;
+            })
+            .collect(Collectors.toList());
     }
     
     /**
@@ -105,27 +119,33 @@ public class RoomService {
     /**
      * 加入房间
      * @param openid 用户openid
-     * @param roomCode 房间号
+     * @param roomId 房间ID（可选）
+     * @param roomCode 房间号（可选）
      * @return 房间信息和交易信息
      */
-    public Map<String, Object> joinRoom(String openid, String roomCode) {
-        
+    public Map<String, Object> joinRoom(String openid, String roomId, String roomCode) {
         // 获取当前用户信息
         User currentUser = userService.getUserByOpenid(openid);
         
         // 查找房间
-        Room room = roomRepository.selectByRoomCode(roomCode);
+        Room room = null;
+        if (roomId != null && !roomId.trim().isEmpty()) {
+            room = roomRepository.selectByRoomId(roomId);
+        } else if (roomCode != null && !roomCode.trim().isEmpty()) {
+            room = roomRepository.selectByRoomCode(roomCode);
+
+            // 如果是根据房间号加入房间，则检查房间是否超过48小时
+            String createdTime = room.getCreatedTime();
+            LocalDateTime roomCreatedTime = LocalDateTime.parse(createdTime, DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+            LocalDateTime now = LocalDateTime.now();
+            Duration duration = Duration.between(roomCreatedTime, now);
+            if (duration.toHours() > 48) {
+                throw new RuntimeException("房间已超过48小时,不能再加入");
+            }
+        }
+        
         if (room == null) {
             throw new RuntimeException("房间不存在");
-        }
-
-        // 检查房间是否超过48小时
-        String createdTime = room.getCreatedTime();
-        LocalDateTime roomCreatedTime = LocalDateTime.parse(createdTime, DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
-        LocalDateTime now = LocalDateTime.now();
-        Duration duration = Duration.between(roomCreatedTime, now);
-        if (duration.toHours() > 48) {
-            throw new RuntimeException("房间已超过48小时,不能再加入");
         }
 
         // 检查用户是否已在房间中
@@ -138,7 +158,7 @@ public class RoomService {
             currentUserRoom = new UserRoom();
             currentUserRoom.setRoomId(room.getRoomId());
             currentUserRoom.setOpenid(openid);
-            currentUserRoom.setBuyInCount(0);
+            currentUserRoom.setBuyIn(0);
             currentUserRoom.setFinalAmount(0);
             currentUserRoom.setProfitLoss(0);
             currentUserRoom.setSettlementStatus("U");
@@ -150,31 +170,27 @@ public class RoomService {
         roomInfo.setRoomName(room.getRoomName());
         roomInfo.setRoomCode(room.getRoomCode());
         roomInfo.setChipAmount(room.getChipAmount());
-
-        // 获取交易信息
-        RoomTransactionDTO transaction = new RoomTransactionDTO();
         
         // 设置当前用户详情
-        UserDetailDTO userDetails = new UserDetailDTO();
-        userDetails.setUserNickname(currentUser.getNickname());
-        userDetails.setBuyInCount(currentUserRoom.getBuyInCount());
-        userDetails.setSettlementStatus(currentUserRoom.getSettlementStatus());
-        userDetails.setFinalAmount(currentUserRoom.getFinalAmount());
-        userDetails.setProfitLoss(currentUserRoom.getProfitLoss());
-        transaction.setUserDetail(userDetails);
+        UserDetailDTO userDetail = new UserDetailDTO();
+        userDetail.setUserNickname(currentUser.getNickname());
+        userDetail.setBuyIn(currentUserRoom.getBuyIn());
+        userDetail.setSettlementStatus(currentUserRoom.getSettlementStatus());
+        userDetail.setFinalAmount(currentUserRoom.getFinalAmount());
+        userDetail.setProfitLoss(currentUserRoom.getProfitLoss());
 
         // 获取其他用户详情
-        List<UserDetailDTO> allUserDetails = getAllUsersDetails(room.getRoomId());
-        transaction.setAllUserDetails(allUserDetails);
+        List<UserDetailDTO> allPlayerDetails = getAllUsersDetails(room.getRoomId());
 
-        // 获取交易记录
-        List<TransactionRecordDTO> records = getTransactionRecords(room.getRoomId());
-        transaction.setTransactionRecords(records);
+        // 获取房间流水记录
+        List<TransactionRecordDTO> transactionRecords = getTransactionRecords(room.getRoomId());
 
         // 构建返回结果
         Map<String, Object> result = new HashMap<>();
         result.put("roomInfo", roomInfo);
-        result.put("transaction", transaction);
+        result.put("userDetail", userDetail);
+        result.put("allPlayerDetails", allPlayerDetails);
+        result.put("transactionRecords", transactionRecords);
         
         return result;
     }
@@ -188,7 +204,7 @@ public class RoomService {
         return allUserDetails.stream().map(userRoom -> {
             UserDetailDTO dto = new UserDetailDTO();
             dto.setUserNickname(userRoom.getUserNickname());
-            dto.setBuyInCount(userRoom.getBuyInCount());
+            dto.setBuyIn(userRoom.getBuyIn());
             dto.setSettlementStatus(userRoom.getSettlementStatus());
             dto.setFinalAmount(userRoom.getFinalAmount());
             dto.setProfitLoss(userRoom.getProfitLoss());
@@ -200,7 +216,17 @@ public class RoomService {
      * 获取房间交易记录
      */
     private List<TransactionRecordDTO> getTransactionRecords(String roomId) {
-        // TODO: 实现从RoomTransactionRepository获取交易记录并转换为DTO
-        return new ArrayList<>(); // 临时返回空列表
+        List<RoomTransaction> transactions = roomTransactionRepository.findTransactionRecordsWithUserInfo(roomId);
+        
+        return transactions.stream()
+            .map(transaction -> {
+                TransactionRecordDTO dto = new TransactionRecordDTO();
+                dto.setTimestamp(transaction.getCreatedTime());
+                dto.setUserNickname(transaction.getUserNickname());
+                dto.setActionType(transaction.getActionType());
+                dto.setActionAmount(transaction.getActionAmount());
+                return dto;
+            })
+            .collect(Collectors.toList());
     }
 }

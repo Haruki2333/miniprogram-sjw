@@ -80,31 +80,30 @@ public class RoomController {
     /**
      * 加入房间
      * @param openid 用户的openid
-     * @param roomCode 房间号
+     * @param roomId 房间ID（可选）
+     * @param roomCode 房间号（可选）
      * @return 房间信息和交易信息
      */
     @PostMapping("/api/room/join")
     public ApiResponse joinRoom(
             @RequestHeader("X-WX-OPENID") String openid,
-            @RequestParam String roomCode) {
+            @RequestParam(required = false) String roomId,
+            @RequestParam(required = false) String roomCode) {
         
         if (openid == null || openid.isEmpty()) {
             return ApiResponse.fail("未获取到用户身份信息");
         }
-        if (roomCode == null || roomCode.trim().isEmpty()) {
-            return ApiResponse.fail("房间号不能为空");
+        if ((roomId == null || roomId.trim().isEmpty()) 
+            && (roomCode == null || roomCode.trim().isEmpty())) {
+            return ApiResponse.fail("房间号和房间ID不能同时为空");
         }
 
         try {
             // 加入房间并获取信息
-            Map<String, Object> result = roomService.joinRoom(openid, roomCode);
+            Map<String, Object> result = roomService.joinRoom(openid, roomId, roomCode);
             return ApiResponse.success(result);
         } catch (Exception e) {
             return ApiResponse.fail(e.getMessage());
         }
     }
-
-    
-
-    
 }
