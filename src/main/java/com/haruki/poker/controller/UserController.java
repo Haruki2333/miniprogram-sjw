@@ -21,7 +21,7 @@ public class UserController {
      * @param nickname 新昵称
      * @return 修改结果
      */
-    @PostMapping("/poker/user/update-nickname")
+    @PostMapping("/api/user/update-nickname")
     public ApiResponse updateNickname(
             @RequestHeader("X-WX-OPENID") String openid,
             @RequestParam String nickname) {

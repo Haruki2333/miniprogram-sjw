@@ -1,8 +1,5 @@
 package com.haruki.poker.controller;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -51,4 +48,19 @@ public class TransactionController {
             return ApiResponse.fail("结算操作失败");
         }
     }
+
+    @PostMapping("/api/room/cancelSettle")
+    public ApiResponse cancelSettle(@RequestHeader("X-WX-OPENID") String openid,
+            @RequestParam String roomId) {
+        
+        boolean success = transactionService.processCancelSettle(roomId, openid);
+        
+        if (success) {
+            return ApiResponse.success();
+        } else {
+            return ApiResponse.fail("取消结算操作失败");
+        }
+    }
+
+    
 }

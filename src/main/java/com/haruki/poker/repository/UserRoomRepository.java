@@ -1,12 +1,14 @@
 package com.haruki.poker.repository;
 
-import org.springframework.stereotype.Repository;
-import org.apache.ibatis.annotations.Update;
-import org.apache.ibatis.annotations.Select;
-import org.apache.ibatis.annotations.Insert;
 import java.util.List;
-import com.haruki.poker.repository.entity.UserRoom;
+
+import org.apache.ibatis.annotations.Insert;
+import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
+import org.springframework.stereotype.Repository;
+
 import com.haruki.poker.repository.entity.Room;
+import com.haruki.poker.repository.entity.UserRoom;
 
 @Repository
 public interface UserRoomRepository {
@@ -28,16 +30,49 @@ public interface UserRoomRepository {
     int insert(String roomId, String openid);
 
     /**
-     * 更新用户房间关系
+     * 直接更新用户房间的买入码量
+     * @param roomId 房间ID
+     * @param openid 用户ID 
+     * @param buyIn 买入码量
+     * @return 更新的记录数
      */
     @Update("UPDATE user_room " +
-            "SET buy_in = #{buyIn}, " +
-            "    final_amount = #{finalAmount}, " +
-            "    profit_loss = #{profitLoss}, " +
-            "    settlement_status = #{settlementStatus}, " +
+            "SET buy_in = buy_in + #{buyIn}, " +
             "    updated_time = DATE_FORMAT(NOW(), '%Y%m%d%H%i%s') " +
-            "WHERE relation_id = #{relationId}")
-    int update(UserRoom userRoom);
+            "WHERE room_id = #{roomId} AND openid = #{openid} " + 
+            "AND settlement_status = 'U'")
+    int updateBuyIn(String roomId, String openid, Integer buyIn);
+
+    /**
+     * 结算用户在房间的最终金额
+     * @param roomId 房间ID
+     * @param openid 用户ID
+     * @param finalAmount 最终金额
+     * @return 更新的记录数
+     */
+    @Update("UPDATE user_room " +
+            "SET final_amount = #{finalAmount}, " +
+            "    profit_loss = #{finalAmount} - buy_in, " +
+            "    settlement_status = 'S', " +
+            "    updated_time = DATE_FORMAT(NOW(), '%Y%m%d%H%i%s') " +
+            "WHERE room_id = #{roomId} AND openid = #{openid} " +
+            "AND settlement_status = 'U'")
+    int settle(String roomId, String openid, Integer finalAmount);
+
+    /**
+     * 取消用户在房间的结算状态
+     * @param roomId 房间ID
+     * @param openid 用户ID
+     * @return 更新的记录数
+     */
+    @Update("UPDATE user_room " +
+            "SET final_amount = 0, " +
+            "    profit_loss = 0, " +
+            "    settlement_status = 'U', " +
+            "    updated_time = DATE_FORMAT(NOW(), '%Y%m%d%H%i%s') " +
+            "WHERE room_id = #{roomId} AND openid = #{openid} " +
+            "AND settlement_status = 'S'")
+    int cancelSettle(String roomId, String openid);
 
     /**
      * 查询用户最近参与的房间列表

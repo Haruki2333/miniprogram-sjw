@@ -27,7 +27,7 @@ public class RoomController {
      * @param openid 用户的openid
      * @return 房间列表信息
      */
-    @GetMapping("/poker/room/recent")
+    @GetMapping("/api/room/recent")
     public ApiResponse getRecentRooms(@RequestHeader("X-WX-OPENID") String openid) {
         if (openid == null || openid.isEmpty()) {
             return ApiResponse.fail("未获取到用户身份信息");
