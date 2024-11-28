@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>扑克房间</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .room-card {
+            margin-bottom: 15px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 class="text-center mb-4">扑克房间</h2>
+        
+        <!-- 创建房间表单 -->
+        <div class="card mb-4">
+            <div class="card-header">创建新房间</div>
+            <div class="card-body">
+                <form id="createRoomForm">
+                    <div class="mb-3">
+                        <label class="form-label">房间名称</label>
+                        <input type="text" class="form-control" id="roomName" required maxlength="32">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">每手码量</label>
+                        <input type="number" class="form-control" id="chipAmount" required min="1">
+                    </div>
+                    <button type="submit" class="btn btn-primary">创建房间</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- 加入房间表单 -->
+        <div class="card mb-4">
+            <div class="card-header">加入房间</div>
+            <div class="card-body">
+                <form id="joinRoomForm">
+                    <div class="mb-3">
+                        <label class="form-label">房间号</label>
+                        <input type="text" class="form-control" id="roomCode">
+                    </div>
+                    <button type="submit" class="btn btn-success">加入房间</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- 最近房间列表 -->
+        <div class="card">
+            <div class="card-header">最近的房间</div>
+            <div class="card-body">
+                <div id="recentRooms"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 设置默认的测试用openid
+        const defaultOpenId = 'test001';
+
+        // 获取最近房间列表
+        function fetchRecentRooms() {
+            fetch('/api/room/recent', {
+                headers: {
+                    'X-WX-OPENID': defaultOpenId
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if(data.success) {
+                        const roomsDiv = document.getElementById('recentRooms');
+                        roomsDiv.innerHTML = '';
+                        data.data.rooms.forEach(room => {
+                            roomsDiv.innerHTML += `
+                                <div class="room-card">
+                                    <h5>${room.roomName}</h5>
+                                    <p>房间号: ${room.roomCode}</p>
+                                    <p>每手码量: ${room.chipAmount}</p>
+                                </div>
+                            `;
+                        });
+                    }
+                })
+                .catch(error => console.error('获取房间列表失败:', error));
+        }
+
+        // 创建房间
+        document.getElementById('createRoomForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData();
+            formData.append('roomName', document.getElementById('roomName').value);
+            formData.append('chipAmount', document.getElementById('chipAmount').value);
+
+            fetch('/api/room/create', {
+                method: 'POST',
+                headers: {
+                    'X-WX-OPENID': defaultOpenId
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.success) {
+                    alert('房间创建成功！');
+                    fetchRecentRooms();
+                } else {
+                    alert('创建失败：' + data.message);
+                }
+            })
+            .catch(error => console.error('创建房间失败:', error));
+        });
+
+        // 加入房间
+        document.getElementById('joinRoomForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData();
+            formData.append('roomCode', document.getElementById('roomCode').value);
+
+            fetch('/api/room/join', {
+                method: 'POST',
+                headers: {
+                    'X-WX-OPENID': defaultOpenId
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.success) {
+                    alert('成功加入房间！');
+                    fetchRecentRooms();
+                } else {
+                    alert('加入失败：' + data.message);
+                }
+            })
+            .catch(error => console.error('加入房间失败:', error));
+        });
+
+        // 页面加载时获取房间列表
+        document.addEventListener('DOMContentLoaded', fetchRecentRooms);
+    </script>
+</body>
+</html>
