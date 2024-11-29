@@ -1,6 +1,7 @@
 package com.haruki.poker.repository;
 
 import org.apache.ibatis.annotations.Insert;
+import org.apache.ibatis.annotations.Options;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 import org.springframework.stereotype.Repository;
@@ -29,10 +30,11 @@ public interface RoomRepository {
     Room selectByRoomCode(String roomCode);
 
     /**
-     * 插入新房间
+     * 插入新房间，并自动获取生成的主键
      */
     @Insert("INSERT INTO room (room_name, room_code, chip_amount, owner_openid, created_time) " +
            "VALUES (#{roomName}, #{roomCode}, #{chipAmount}, #{ownerOpenid}, DATE_FORMAT(NOW(), '%Y%m%d%H%i%s'))")
+    @Options(useGeneratedKeys = true, keyProperty = "roomId")
     int insert(Room room);
 
     /**

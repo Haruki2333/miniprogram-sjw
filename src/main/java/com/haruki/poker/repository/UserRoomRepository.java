@@ -85,7 +85,7 @@ public interface UserRoomRepository {
             "    r.room_code, " + 
             "    r.chip_amount, " +
             "    r.owner_openid, " +
-            "    ur.created_time" +
+            "    ur.created_time " +
             "FROM room r " +
             "INNER JOIN user_room ur ON r.room_id = ur.room_id " +
             "WHERE ur.openid = #{openid} ")
