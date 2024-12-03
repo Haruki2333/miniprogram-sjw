@@ -64,6 +64,7 @@ public class RoomService {
                 dto.setRoomName(room.getRoomName());
                 dto.setRoomCode(room.getRoomCode());
                 dto.setChipAmount(room.getChipAmount());
+                dto.setCreatedTime(room.getCreatedTime());
                 return dto;
             })
             .collect(Collectors.toList());
@@ -109,6 +110,7 @@ public class RoomService {
     
     /**
      * 生成6位随机房间码
+     * TODO 统一管理起来
      */
     private String generateRoomCode() {
         // 生成6位数字房间码

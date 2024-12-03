@@ -8,4 +8,5 @@ public class RoomInfoDTO {
     private String roomName;
     private String roomCode;
     private Integer chipAmount;
+    private String createdTime;
 } 
