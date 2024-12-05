@@ -4,7 +4,7 @@ import lombok.Getter;
 
 @Getter
 public enum ActionType {
-    B("买入"),
+    B("带入"),
     S("结算"),
     C("取消结算");
     
