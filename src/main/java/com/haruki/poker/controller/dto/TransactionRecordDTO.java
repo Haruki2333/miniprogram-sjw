@@ -10,7 +10,7 @@ public class TransactionRecordDTO {
     private String actionType;
     private Integer actionAmount;
     
-    public String getActionTypeDescription() {
-        return ActionType.getDescription(this.actionType);
+    public String setActionType(String actionType) {
+        return ActionType.getDescription(actionType);
     }
 } 
