@@ -205,15 +205,26 @@ public class RoomService {
     private List<UserDetailDTO> getAllUsersDetails(String roomId) {
         List<UserRoom> allUserDetails = userRoomRepository.selectByRoomIdWithNickname(roomId);
         
-        return allUserDetails.stream().map(userRoom -> {
-            UserDetailDTO dto = new UserDetailDTO();
-            dto.setUserNickname(userRoom.getUserNickname());
-            dto.setBuyIn(userRoom.getBuyIn());
-            dto.setSettlementStatus(userRoom.getSettlementStatus());
-            dto.setFinalAmount(userRoom.getFinalAmount());
-            dto.setProfitLoss(userRoom.getProfitLoss());
-            return dto;
-        }).collect(Collectors.toList());
+        return allUserDetails.stream()
+            .sorted((a, b) -> {
+                // 优先按结算状态排序
+                int statusCompare = b.getSettlementStatus().compareTo(a.getSettlementStatus());
+                if (statusCompare != 0) {
+                    return statusCompare;
+                }
+                // 结算状态相同时按创建时间倒序，从新到旧
+                return b.getCreatedTime().compareTo(a.getCreatedTime());
+            })
+            .map(userRoom -> {
+                UserDetailDTO dto = new UserDetailDTO();
+                dto.setUserNickname(userRoom.getUserNickname());
+                dto.setBuyIn(userRoom.getBuyIn());
+                dto.setSettlementStatus(userRoom.getSettlementStatus());
+                dto.setFinalAmount(userRoom.getFinalAmount());
+                dto.setProfitLoss(userRoom.getProfitLoss());
+                return dto;
+            })
+            .collect(Collectors.toList());
     }
 
     /**
