@@ -36,9 +36,11 @@ public class RoomService {
 
     @Autowired
     private UserService userService;
+
+    private static final Integer ROOM_EXPIRED_DAYS = 7;
     
     /**
-     * 获取用户最近参与的房间列表
+     * 获取用户最近参与的房间列表（房间创建时间在7天内）
      * @param openid 用户的openid
      * @return 房间信息列表
      */
@@ -55,7 +57,7 @@ public class RoomService {
             .filter(room -> {
                 LocalDateTime roomTime = LocalDateTime.parse(room.getCreatedTime(), formatter);
                 Duration duration = Duration.between(roomTime, now);
-                return duration.toHours() < 48;
+                return duration.toDays() <= ROOM_EXPIRED_DAYS;
             })
             .sorted((r1, r2) -> r2.getCreatedTime().compareTo(r1.getCreatedTime()))
             .map(room -> {
@@ -135,19 +137,19 @@ public class RoomService {
             room = roomRepository.selectByRoomId(roomId);
         } else if (roomCode != null && !roomCode.trim().isEmpty()) {
             room = roomRepository.selectByRoomCode(roomCode);
-
-            // 如果是根据房间号加入房间，则检查房间是否超过48小时
-            String createdTime = room.getCreatedTime();
-            LocalDateTime roomCreatedTime = LocalDateTime.parse(createdTime, DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
-            LocalDateTime now = LocalDateTime.now();
-            Duration duration = Duration.between(roomCreatedTime, now);
-            if (duration.toHours() > 48) {
-                throw new RuntimeException("房间已超过48小时,不能再加入");
-            }
         }
         
         if (room == null) {
             throw new RuntimeException("房间不存在");
+        }
+
+        // 检查房间是否超过7天
+        String createdTime = room.getCreatedTime();
+        LocalDateTime roomCreatedTime = LocalDateTime.parse(createdTime, DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+        LocalDateTime now = LocalDateTime.now();
+        Duration duration = Duration.between(roomCreatedTime, now);
+        if (duration.toDays() > ROOM_EXPIRED_DAYS) {
+            throw new RuntimeException("房间已过期");
         }
 
         // 检查用户是否已在房间中

@@ -77,7 +77,7 @@ public interface UserRoomRepository {
     /**
      * 查询用户最近参与的房间列表
      * @param openid 用户ID
-     * @return 房间列表，包含房间基本信息和用户加入时间
+     * @return 房间列表，包含房间基本信息和房间创建时间
      */
     @Select("SELECT " +
             "    r.room_id, " +
@@ -85,7 +85,7 @@ public interface UserRoomRepository {
             "    r.room_code, " + 
             "    r.chip_amount, " +
             "    r.owner_openid, " +
-            "    ur.created_time " +
+            "    r.created_time " +
             "FROM room r " +
             "INNER JOIN user_room ur ON r.room_id = ur.room_id " +
             "WHERE ur.openid = #{openid} ")
