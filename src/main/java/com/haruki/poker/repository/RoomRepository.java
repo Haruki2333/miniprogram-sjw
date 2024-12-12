@@ -20,13 +20,11 @@ public interface RoomRepository {
     Room selectByRoomId(String roomId);
     
     /**
-     * 根据roomCode查询最近创建的一条纪录
+     * 根据roomCode查询最近7天创建的纪录
      */
     @Select("SELECT room_id, room_name, room_code, chip_amount, owner_openid, created_time, created_date " +
            "FROM room " +
-           "WHERE room_code = #{roomCode} " +
-           "ORDER BY created_time DESC " +
-           "LIMIT 1")
+           "WHERE room_code = #{roomCode} AND created_date >= DATE_FORMAT(DATE_SUB(NOW(), INTERVAL 7 DAY), '%Y%m%d') LIMIT 1")
     Room selectByRoomCode(String roomCode);
 
     /**

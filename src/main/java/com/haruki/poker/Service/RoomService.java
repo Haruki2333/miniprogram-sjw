@@ -1,8 +1,5 @@
 package com.haruki.poker.Service;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,8 +33,6 @@ public class RoomService {
 
     @Autowired
     private UserService userService;
-
-    private static final Integer ROOM_EXPIRED_DAYS = 7;
     
     /**
      * 获取用户最近参与的房间列表（房间创建时间在7天内）
@@ -104,12 +99,29 @@ public class RoomService {
     
     /**
      * 生成6位随机房间码
-     * TODO 统一管理起来
      */
     private String generateRoomCode() {
-        // 生成6位数字房间码
-        int code = (int) ((Math.random() * 900000) + 100000);
-        return String.valueOf(code);
+        String code;
+        int maxAttempts = 10; // 最大尝试次数
+        int attempts = 0;
+        
+        do {
+            // 生成6位数字房间码
+            int randomCode = (int) ((Math.random() * 900000) + 100000);
+            code = String.valueOf(randomCode);
+            
+            // 检查房间码是否已存在
+            Room existingRoom = roomRepository.selectByRoomCode(code);
+            
+            if (existingRoom == null) {
+                return code;
+            }
+            
+            attempts++;
+        } while (attempts < maxAttempts);
+        
+        // 如果多次尝试都失败，抛出异常
+        throw new RuntimeException("无法生成唯一的房间码，请稍后重试");
     }
     
     /**
@@ -132,16 +144,7 @@ public class RoomService {
         }
         
         if (room == null) {
-            throw new RuntimeException("房间不存在");
-        }
-
-        // 检查房间是否超过7天
-        String createdDate = room.getCreatedDate();
-        LocalDate roomCreatedDate = LocalDate.parse(createdDate, DateTimeFormatter.ofPattern("yyyyMMdd"));
-        LocalDate now = LocalDate.now();
-        long daysBetween = ChronoUnit.DAYS.between(roomCreatedDate, now);
-        if (daysBetween > ROOM_EXPIRED_DAYS) {
-            throw new RuntimeException("房间已过期");
+            throw new RuntimeException("房间不存在或已过期");
         }
 
         // 检查用户是否已在房间中
