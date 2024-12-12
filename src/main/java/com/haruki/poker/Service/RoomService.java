@@ -1,8 +1,8 @@
 package com.haruki.poker.Service;
 
-import java.time.Duration;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,9 +18,9 @@ import com.haruki.poker.repository.RoomRepository;
 import com.haruki.poker.repository.RoomTransactionRepository;
 import com.haruki.poker.repository.UserRoomRepository;
 import com.haruki.poker.repository.entity.Room;
+import com.haruki.poker.repository.entity.RoomTransaction;
 import com.haruki.poker.repository.entity.User;
 import com.haruki.poker.repository.entity.UserRoom;
-import com.haruki.poker.repository.entity.RoomTransaction;
 
 @Service
 public class RoomService {
@@ -49,16 +49,8 @@ public class RoomService {
         if (rooms == null || rooms.isEmpty()) {
             return List.of();
         }
-
-        LocalDateTime now = LocalDateTime.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
         
         return rooms.stream()
-            .filter(room -> {
-                LocalDateTime roomTime = LocalDateTime.parse(room.getCreatedTime(), formatter);
-                Duration duration = Duration.between(roomTime, now);
-                return duration.toDays() <= ROOM_EXPIRED_DAYS;
-            })
             .sorted((r1, r2) -> r2.getCreatedTime().compareTo(r1.getCreatedTime()))
             .map(room -> {
                 RoomInfoDTO dto = new RoomInfoDTO();
@@ -144,11 +136,11 @@ public class RoomService {
         }
 
         // 检查房间是否超过7天
-        String createdTime = room.getCreatedTime();
-        LocalDateTime roomCreatedTime = LocalDateTime.parse(createdTime, DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
-        LocalDateTime now = LocalDateTime.now();
-        Duration duration = Duration.between(roomCreatedTime, now);
-        if (duration.toDays() > ROOM_EXPIRED_DAYS) {
+        String createdDate = room.getCreatedDate();
+        LocalDate roomCreatedDate = LocalDate.parse(createdDate, DateTimeFormatter.ofPattern("yyyyMMdd"));
+        LocalDate now = LocalDate.now();
+        long daysBetween = ChronoUnit.DAYS.between(roomCreatedDate, now);
+        if (daysBetween > ROOM_EXPIRED_DAYS) {
             throw new RuntimeException("房间已过期");
         }
 

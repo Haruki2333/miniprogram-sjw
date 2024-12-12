@@ -75,7 +75,7 @@ public interface UserRoomRepository {
     int cancelSettle(String roomId, String openid);
 
     /**
-     * 查询用户最近参与的房间列表
+     * 查询用户最近7天参与的房间列表
      * @param openid 用户ID
      * @return 房间列表，包含房间基本信息和房间创建时间
      */
@@ -88,7 +88,8 @@ public interface UserRoomRepository {
             "    r.created_time " +
             "FROM room r " +
             "INNER JOIN user_room ur ON r.room_id = ur.room_id " +
-            "WHERE ur.openid = #{openid} ")
+            "WHERE ur.openid = #{openid} " +
+            "AND r.created_date >= DATE_FORMAT(DATE_SUB(NOW(), INTERVAL 7 DAY), '%Y%m%d')")
     List<Room> findRecentRoomsByOpenid(String openid);
 
     /**

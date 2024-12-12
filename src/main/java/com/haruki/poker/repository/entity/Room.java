@@ -12,4 +12,5 @@ public class Room {
     private int chipAmount;
     private String ownerOpenid;
     private String createdTime;
+    private String createdDate;
 }

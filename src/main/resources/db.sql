@@ -15,8 +15,10 @@ CREATE TABLE `room` (
     `chip_amount` INT NOT NULL DEFAULT 0 COMMENT '每手码量',
     `owner_openid` VARCHAR(32) NOT NULL COMMENT '房主OpenID',
     `created_time` VARCHAR(14) NOT NULL COMMENT '创建时间',
+    `created_date` VARCHAR(8) NOT NULL COMMENT '创建日期',
     PRIMARY KEY (`room_id`),
-    INDEX `idx_room_code` (`room_code`)
+    INDEX `idx_room_code` (`room_code`),
+    INDEX `idx_created_date` (`created_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='房间表';
 
 -- 用户房间关系表
