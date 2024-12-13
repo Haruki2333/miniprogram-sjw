@@ -1,5 +1,6 @@
 package com.haruki.poker.Service;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -93,6 +94,7 @@ public class RoomService {
         Map<String, Object> result = new HashMap<>();
         result.put("roomInfo", roomInfo);
         result.put("userDetail", userDetail);
+        result.put("allPlayerDetails", Arrays.asList(userDetail));
         
         return result;
     }
