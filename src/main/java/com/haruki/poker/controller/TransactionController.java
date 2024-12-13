@@ -18,8 +18,8 @@ public class TransactionController {
     @PostMapping("/api/room/buyIn")
     public ApiResponse buyIn(@RequestHeader("X-WX-OPENID") String openid,
             @RequestParam String roomId, @RequestParam(defaultValue = "1") int hands) {
-        if (hands > 10) {
-            return ApiResponse.fail("每次最多只能带入10手");
+        if (hands <= 0 || hands > 99) {
+            return ApiResponse.fail("带入手数异常");
         }
 
         boolean success = transactionService.processBuyIn(roomId, openid, hands);
@@ -33,15 +33,15 @@ public class TransactionController {
 
     @PostMapping("/api/room/settle")
     public ApiResponse settle(@RequestHeader("X-WX-OPENID") String openid,
-            @RequestParam String roomId, 
+            @RequestParam String roomId,
             @RequestParam int finalAmount) {
-        
+
         if (finalAmount < 0) {
             return ApiResponse.fail("结算码量不能小于0");
         }
-        
+
         boolean success = transactionService.processSettle(roomId, openid, finalAmount);
-        
+
         if (success) {
             return ApiResponse.success();
         } else {
@@ -52,9 +52,9 @@ public class TransactionController {
     @PostMapping("/api/room/cancelSettle")
     public ApiResponse cancelSettle(@RequestHeader("X-WX-OPENID") String openid,
             @RequestParam String roomId) {
-        
+
         boolean success = transactionService.processCancelSettle(roomId, openid);
-        
+
         if (success) {
             return ApiResponse.success();
         } else {
@@ -62,5 +62,4 @@ public class TransactionController {
         }
     }
 
-    
 }
