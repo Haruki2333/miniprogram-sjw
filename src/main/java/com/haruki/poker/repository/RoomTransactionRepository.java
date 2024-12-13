@@ -19,13 +19,14 @@ public interface RoomTransactionRepository {
     int insert(RoomTransaction roomTransaction);
 
     /**
-     * 查询房间的交易记录
+     * 查询房间的买入交易记录
      */
     @Select("SELECT t.transaction_id, t.room_id, t.openid, t.action_type, " +
             "t.action_amount, t.created_time, u.nickname as user_nickname " +
             "FROM room_transaction t " +
             "JOIN user u ON t.openid = u.openid " +
             "WHERE t.room_id = #{roomId} " +
+            "AND t.action_type = 'B' " +
             "ORDER BY t.created_time DESC")
     List<RoomTransaction> findTransactionRecordsWithUserInfo(String roomId);
 

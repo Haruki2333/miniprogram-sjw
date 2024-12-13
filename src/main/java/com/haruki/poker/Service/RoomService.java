@@ -22,10 +22,10 @@ import com.haruki.poker.repository.entity.UserRoom;
 
 @Service
 public class RoomService {
-    
+
     @Autowired
     private RoomRepository roomRepository;
-    
+
     @Autowired
     private UserRoomRepository userRoomRepository;
 
@@ -34,9 +34,10 @@ public class RoomService {
 
     @Autowired
     private UserService userService;
-    
+
     /**
      * 获取用户最近参与的房间列表（房间创建时间在7天内）
+     * 
      * @param openid 用户的openid
      * @return 房间信息列表
      */
@@ -45,26 +46,27 @@ public class RoomService {
         if (rooms == null || rooms.isEmpty()) {
             return List.of();
         }
-        
+
         return rooms.stream()
-            .sorted((r1, r2) -> r2.getCreatedTime().compareTo(r1.getCreatedTime()))
-            .map(room -> {
-                RoomInfoDTO dto = new RoomInfoDTO();
-                dto.setRoomId(room.getRoomId());
-                dto.setRoomName(room.getRoomName());
-                dto.setRoomCode(room.getRoomCode());
-                dto.setChipAmount(room.getChipAmount());
-                dto.setCreatedTime(room.getCreatedTime());
-                return dto;
-            })
-            .collect(Collectors.toList());
+                .sorted((r1, r2) -> r2.getCreatedTime().compareTo(r1.getCreatedTime()))
+                .map(room -> {
+                    RoomInfoDTO dto = new RoomInfoDTO();
+                    dto.setRoomId(room.getRoomId());
+                    dto.setRoomName(room.getRoomName());
+                    dto.setRoomCode(room.getRoomCode());
+                    dto.setChipAmount(room.getChipAmount());
+                    dto.setCreatedTime(room.getCreatedTime());
+                    return dto;
+                })
+                .collect(Collectors.toList());
     }
-    
+
     /**
      * 创建新房间
+     * 
      * @param ownerOpenid 房主openid
-     * @param roomName 房间名称
-     * @param chipAmount 每手码量
+     * @param roomName    房间名称
+     * @param chipAmount  每手码量
      * @return 房间信息
      */
     public Map<String, Object> createRoom(String ownerOpenid, String roomName, Integer chipAmount) {
@@ -80,10 +82,10 @@ public class RoomService {
         room.setOwnerOpenid(ownerOpenid);
         room.setRoomCode(generateRoomCode()); // 生成6位随机房间码
         roomRepository.insert(room);
-        
+
         // 加入房间
         userRoomRepository.insert(room.getRoomId(), ownerOpenid);
-        
+
         RoomInfoDTO roomInfo = new RoomInfoDTO();
         roomInfo.setRoomId(room.getRoomId());
         roomInfo.setRoomCode(room.getRoomCode());
@@ -94,11 +96,10 @@ public class RoomService {
         Map<String, Object> result = new HashMap<>();
         result.put("roomInfo", roomInfo);
         result.put("userDetail", userDetail);
-        result.put("allPlayerDetails", Arrays.asList(userDetail));
-        
+
         return result;
     }
-    
+
     /**
      * 生成6位随机房间码
      */
@@ -106,37 +107,38 @@ public class RoomService {
         String code;
         int maxAttempts = 10; // 最大尝试次数
         int attempts = 0;
-        
+
         do {
             // 生成6位数字房间码
             int randomCode = (int) ((Math.random() * 900000) + 100000);
             code = String.valueOf(randomCode);
-            
+
             // 检查房间码是否已存在
             Room existingRoom = roomRepository.selectByRoomCode(code);
-            
+
             if (existingRoom == null) {
                 return code;
             }
-            
+
             attempts++;
         } while (attempts < maxAttempts);
-        
+
         // 如果多次尝试都失败，抛出异常
         throw new RuntimeException("无法生成唯一的房间码，请稍后重试");
     }
-    
+
     /**
      * 加入房间
-     * @param openid 用户openid
-     * @param roomId 房间ID（可选）
+     * 
+     * @param openid   用户openid
+     * @param roomId   房间ID（可选）
      * @param roomCode 房间号（可选）
      * @return 房间信息和交易信息
      */
     public Map<String, Object> joinRoom(String openid, String roomId, String roomCode) {
         // 获取当前用户信息
         User currentUser = userService.getUserByOpenid(openid);
-        
+
         // 查找房间
         Room room = null;
         if (roomId != null && !roomId.trim().isEmpty()) {
@@ -144,7 +146,7 @@ public class RoomService {
         } else if (roomCode != null && !roomCode.trim().isEmpty()) {
             room = roomRepository.selectByRoomCode(roomCode);
         }
-        
+
         if (room == null) {
             throw new RuntimeException("房间不存在或已过期");
         }
@@ -171,7 +173,7 @@ public class RoomService {
         roomInfo.setRoomName(room.getRoomName());
         roomInfo.setRoomCode(room.getRoomCode());
         roomInfo.setChipAmount(room.getChipAmount());
-        
+
         // 设置当前用户详情
         UserDetailDTO userDetail = new UserDetailDTO();
         userDetail.setUserNickname(currentUser.getNickname());
@@ -192,7 +194,7 @@ public class RoomService {
         result.put("userDetail", userDetail);
         result.put("allPlayerDetails", allPlayerDetails);
         result.put("transactionRecords", transactionRecords);
-        
+
         return result;
     }
 
@@ -201,44 +203,45 @@ public class RoomService {
      */
     private List<UserDetailDTO> getAllUsersDetails(String roomId) {
         List<UserRoom> allUserDetails = userRoomRepository.selectByRoomIdWithNickname(roomId);
-        
+
         return allUserDetails.stream()
-            .sorted((a, b) -> {
-                // 优先按结算状态排序
-                int statusCompare = b.getSettlementStatus().compareTo(a.getSettlementStatus());
-                if (statusCompare != 0) {
-                    return statusCompare;
-                }
-                // 结算状态相同时按创建时间倒序，从新到旧
-                return b.getCreatedTime().compareTo(a.getCreatedTime());
-            })
-            .map(userRoom -> {
-                UserDetailDTO dto = new UserDetailDTO();
-                dto.setUserNickname(userRoom.getUserNickname());
-                dto.setBuyIn(userRoom.getBuyIn());
-                dto.setSettlementStatus(userRoom.getSettlementStatus());
-                dto.setFinalAmount(userRoom.getFinalAmount());
-                dto.setProfitLoss(userRoom.getProfitLoss());
-                return dto;
-            })
-            .collect(Collectors.toList());
+                .filter(userRoom -> userRoom.getBuyIn() > 0) // 过滤掉带入为0的用户
+                .sorted((a, b) -> {
+                    // 优先按结算状态排序
+                    int statusCompare = a.getSettlementStatus().compareTo(b.getSettlementStatus());
+                    if (statusCompare != 0) {
+                        return statusCompare;
+                    }
+                    // 结算状态相同时按创建时间倒序，从新到旧
+                    return b.getCreatedTime().compareTo(a.getCreatedTime());
+                })
+                .map(userRoom -> {
+                    UserDetailDTO dto = new UserDetailDTO();
+                    dto.setUserNickname(userRoom.getUserNickname());
+                    dto.setBuyIn(userRoom.getBuyIn());
+                    dto.setSettlementStatus(userRoom.getSettlementStatus());
+                    dto.setFinalAmount(userRoom.getFinalAmount());
+                    dto.setProfitLoss(userRoom.getProfitLoss());
+                    return dto;
+                })
+                .collect(Collectors.toList());
     }
 
     /**
-     * 获取房间交易记录
+     * 获取房间带入流水
      */
     private List<TransactionRecordDTO> getTransactionRecords(String roomId) {
         List<RoomTransaction> transactions = roomTransactionRepository.findTransactionRecordsWithUserInfo(roomId);
-        
+
         return transactions.stream()
-            .map(transaction -> {
-                TransactionRecordDTO dto = new TransactionRecordDTO();
-                dto.setTimestamp(transaction.getCreatedTime());
-                dto.setUserNickname(transaction.getUserNickname());
-                dto.setActionType(transaction.getActionType());
-                dto.setActionAmount(transaction.getActionAmount());
-                return dto;
-            })
-            .collect(Collectors.toList());
+                .map(transaction -> {
+                    TransactionRecordDTO dto = new TransactionRecordDTO();
+                    dto.setTimestamp(transaction.getCreatedTime());
+                    dto.setUserNickname(transaction.getUserNickname());
+                    dto.setActionType(transaction.getActionType());
+                    dto.setActionAmount(transaction.getActionAmount());
+                    return dto;
+                })
+                .collect(Collectors.toList());
     }
 }
