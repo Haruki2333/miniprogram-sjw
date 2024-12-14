@@ -204,7 +204,7 @@ public class RoomService {
     private List<UserDetailDTO> getAllUsersDetails(String roomId) {
         List<UserRoom> allUserDetails = userRoomRepository.selectByRoomIdWithNickname(roomId);
 
-        return allUserDetails.stream()
+        List<UserDetailDTO> userDetailList = allUserDetails.stream()
                 .filter(userRoom -> userRoom.getBuyIn() > 0) // 过滤掉带入为0的用户
                 .sorted((a, b) -> {
                     // 优先按结算状态排序
@@ -225,6 +225,17 @@ public class RoomService {
                     return dto;
                 })
                 .collect(Collectors.toList());
+
+        // 添加汇总行
+        UserDetailDTO totalRow = new UserDetailDTO();
+        totalRow.setUserNickname("合计");
+        totalRow.setBuyIn(userDetailList.stream().mapToInt(UserDetailDTO::getBuyIn).sum());
+        totalRow.setFinalAmount(userDetailList.stream().mapToInt(UserDetailDTO::getFinalAmount).sum());
+        totalRow.setProfitLoss(totalRow.getBuyIn() - totalRow.getFinalAmount());
+        totalRow.setSettlementStatus("T");
+        userDetailList.add(totalRow);
+
+        return userDetailList;
     }
 
     /**
