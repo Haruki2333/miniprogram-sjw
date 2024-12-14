@@ -231,7 +231,7 @@ public class RoomService {
         totalRow.setUserNickname("合计");
         totalRow.setBuyIn(userDetailList.stream().mapToInt(UserDetailDTO::getBuyIn).sum());
         totalRow.setFinalAmount(userDetailList.stream().mapToInt(UserDetailDTO::getFinalAmount).sum());
-        totalRow.setProfitLoss(totalRow.getBuyIn() - totalRow.getFinalAmount());
+        totalRow.setProfitLoss(totalRow.getFinalAmount() - totalRow.getBuyIn());
         totalRow.setSettlementStatus("T");
         userDetailList.add(totalRow);
 
