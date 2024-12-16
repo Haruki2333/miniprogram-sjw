@@ -208,7 +208,7 @@ public class RoomService {
                 .sorted((a, b) -> {
                     // 优先按结算状态排序,已结算("S")排在前面
                     if (!a.getSettlementStatus().equals(b.getSettlementStatus())) {
-                        return b.getSettlementStatus().compareTo(a.getSettlementStatus());
+                        return a.getSettlementStatus().compareTo(b.getSettlementStatus());
                     }
                     
                     // 如果都是已结算状态,按盈亏金额降序排序
