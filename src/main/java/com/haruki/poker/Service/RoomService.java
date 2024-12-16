@@ -1,6 +1,5 @@
 package com.haruki.poker.Service;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -207,13 +206,18 @@ public class RoomService {
         List<UserDetailDTO> userDetailList = allUserDetails.stream()
                 .filter(userRoom -> userRoom.getBuyIn() > 0) // 过滤掉带入为0的用户
                 .sorted((a, b) -> {
-                    // 优先按结算状态排序
-                    int statusCompare = a.getSettlementStatus().compareTo(b.getSettlementStatus());
-                    if (statusCompare != 0) {
-                        return statusCompare;
+                    // 优先按结算状态排序,已结算("S")排在前面
+                    if (!a.getSettlementStatus().equals(b.getSettlementStatus())) {
+                        return b.getSettlementStatus().compareTo(a.getSettlementStatus());
                     }
-                    // 结算状态相同时按创建时间倒序，从新到旧
-                    return b.getCreatedTime().compareTo(a.getCreatedTime());
+                    
+                    // 如果都是已结算状态,按盈亏金额降序排序
+                    if (a.getSettlementStatus().equals("S")) {
+                        return Integer.compare(b.getProfitLoss(), a.getProfitLoss());
+                    }
+                    
+                    // 如果都是未结算状态,按带入金额降序排序
+                    return Integer.compare(b.getBuyIn(), a.getBuyIn());
                 })
                 .map(userRoom -> {
                     UserDetailDTO dto = new UserDetailDTO();
