@@ -23,7 +23,7 @@ public class TransactionService {
     private UserRoomRepository userRoomRepository;
 
     @Transactional
-    public boolean processBuyIn(String roomId, String openid, int hands) {
+    public boolean processBuyIn(String roomId, String openid, Integer hands, Integer buyInAmount) {
         // 获取房间信息
         Room room = roomRepository.selectByRoomId(roomId);
         if (room == null) {
@@ -31,22 +31,27 @@ public class TransactionService {
         }
 
         // 计算实际买入码量
-        int buyInAmount = hands * room.getChipAmount();
+        int actualBuyInAmount;
+        if (buyInAmount != null) {
+            actualBuyInAmount = buyInAmount;
+        } else {
+            actualBuyInAmount = hands * room.getChipAmount();
+        }
 
         // 记录买入交易
         RoomTransaction transaction = new RoomTransaction();
         transaction.setRoomId(roomId);
         transaction.setOpenid(openid);
         transaction.setActionType("B"); // B 表示买入(Buy In)
-        transaction.setActionAmount(buyInAmount);
+        transaction.setActionAmount(actualBuyInAmount);
 
         // 更新买入码量
-        if (userRoomRepository.updateBuyIn(roomId, openid, buyInAmount) > 0) {
+        if (userRoomRepository.updateBuyIn(roomId, openid, actualBuyInAmount) > 0) {
             if (roomTransactionRepository.insert(transaction) > 0) {
                 return true;
             } else {
                 // 插入流水失败，回滚
-                userRoomRepository.updateBuyIn(roomId, openid, -buyInAmount);
+                userRoomRepository.updateBuyIn(roomId, openid, -actualBuyInAmount);
             }
         }
 

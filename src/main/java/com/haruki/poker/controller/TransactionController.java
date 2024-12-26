@@ -17,12 +17,24 @@ public class TransactionController {
 
     @PostMapping("/api/room/buyIn")
     public ApiResponse buyIn(@RequestHeader("X-WX-OPENID") String openid,
-            @RequestParam String roomId, @RequestParam(defaultValue = "1") int hands) {
-        if (hands <= 0 || hands > 99) {
+            @RequestParam String roomId, 
+            @RequestParam(required = false) Integer hands,
+            @RequestParam(required = false) Integer buyInAmount) {
+        
+        // 验证参数
+        if (hands == null && buyInAmount == null) {
+            return ApiResponse.fail("带入手数和带入码量不能同时为空");
+        }
+        
+        if (hands != null && (hands <= 0 || hands > 99)) {
             return ApiResponse.fail("带入手数异常");
         }
+        
+        if (buyInAmount != null && buyInAmount <= 0) {
+            return ApiResponse.fail("带入码量必须大于0");
+        }
 
-        boolean success = transactionService.processBuyIn(roomId, openid, hands);
+        boolean success = transactionService.processBuyIn(roomId, openid, hands, buyInAmount);
 
         if (success) {
             return ApiResponse.success();

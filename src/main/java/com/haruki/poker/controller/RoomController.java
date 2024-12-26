@@ -54,16 +54,13 @@ public class RoomController {
     public ApiResponse createRoom(
             @RequestHeader("X-WX-OPENID") String openid,
             @RequestParam String roomName,
-            @RequestParam Integer chipAmount) {
+            @RequestParam(defaultValue = "0") Integer chipAmount) {
         
         if (openid == null || openid.isEmpty()) {
             return ApiResponse.fail("未获取到用户身份信息");
         }
         if (roomName == null || roomName.trim().isEmpty()) {
             return ApiResponse.fail("房间名称不能为空");
-        }
-        if (chipAmount == null || chipAmount <= 0) {
-            return ApiResponse.fail("码量必须大于0");
         }
         if (roomName.length() > 32) {
             return ApiResponse.fail("房间名称不能超过32个字符");
