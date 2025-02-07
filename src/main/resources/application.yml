@@ -3,7 +3,7 @@ server:
 
 spring:
   application:
-    name: poker
+    name: cloud
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://${MYSQL_ADDRESS}/${MYSQL_DATABASE:springboot_demo}
